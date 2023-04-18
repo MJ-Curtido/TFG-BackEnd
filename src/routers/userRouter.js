@@ -22,18 +22,19 @@ router.post("/users/login", async (req, res) => {
 
         res.send({ user, token });
     } catch (e) {
-        res.status(400).send();
+        res.status(400).send({ error: "Error to log in." });
     }
 });
 
 router.get("/users/logout", auth, async (req, res) => {
     try {
+        console.log(req.token);
         req.user.tokens = req.user.tokens.filter((token) => {
             return token.token !== req.token;
         });
         await req.user.save();
 
-        res.send();
+        res.send({ message: "Log out successfully." });
     } catch (e) {
         res.status(500).send();
     }
@@ -43,7 +44,7 @@ router.get("/users/me", auth, async (req, res) => {
     res.send(req.user);
 });
 
-router.patch("/users/me", async (req, res) => {
+router.patch("/users/me", auth, async (req, res) => {
     const updates = Object.keys(req.body);
     const allowedUpdates = ["name", "email", "password", "birthdate", "telephone"];
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
@@ -62,7 +63,7 @@ router.patch("/users/me", async (req, res) => {
     }
 });
 
-router.delete("/users/me", async (req, res) => {
+router.delete("/users/me", auth, async (req, res) => {
     try {
         await req.user.remove();
 

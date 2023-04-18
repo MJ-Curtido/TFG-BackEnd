@@ -1,2 +1,2 @@
 const mongoose = require("mongoose");
-mongoose.connect("mongodb://127.0.0.1:27017/backend_cookerycorner");
+mongoose.connect(process.env.MONGODB_URL);
