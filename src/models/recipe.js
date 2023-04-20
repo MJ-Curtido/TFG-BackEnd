@@ -8,10 +8,11 @@ const recipeSchema = mongoose.Schema(
             required: true,
             trim: true,
         },
-        image: {
-            type: Buffer,
-            required: true,
-        },
+        images: [
+            {
+                type: String,
+            },
+        ],
         description: {
             type: String,
             required: true,
@@ -44,7 +45,7 @@ const recipeSchema = mongoose.Schema(
                 image: {
                     type: Buffer,
                 },
-            }
+            },
         ],
         price: {
             type: Number,

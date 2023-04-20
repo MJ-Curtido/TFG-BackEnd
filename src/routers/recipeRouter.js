@@ -1,9 +1,9 @@
-const express = require("express");
-const Recipe = require("../models/recipe");
-const auth = require("../middleware/auth");
+const express = require('express');
+const Recipe = require('../models/recipe');
+const auth = require('../middleware/auth');
 const router = new express.Router();
 
-router.post("/recipe/create", auth, async (req, res) => {
+router.post('/recipe/create', auth, async (req, res) => {
     let recipe = new Recipe({
         ...req.body,
         author: req.user._id,
@@ -11,16 +11,16 @@ router.post("/recipe/create", auth, async (req, res) => {
 
     try {
         await recipe.save();
-        recipe = await Recipe.findById(recipe._id).populate("author");
+        recipe = await Recipe.findById(recipe._id).populate('author');
         res.status(201).send(recipe);
     } catch (e) {
-        res.status(400).send(e);
+        res.status(400).send({ error: e.message });
     }
 });
 
-router.get("/recipe/me", auth, async (req, res) => {
+router.get('/recipe/me', auth, async (req, res) => {
     try {
-        const recipes = await Recipe.find({ author: req.user._id }).populate("author");
+        const recipes = await Recipe.find({ author: req.user._id }).populate('author');
 
         if (recipes.length == 0) {
             return res.status(404).send({ error: "You haven't created any recipe." });
@@ -28,24 +28,28 @@ router.get("/recipe/me", auth, async (req, res) => {
 
         res.send(recipes);
     } catch (e) {
-        res.status(500).send(e);
+        res.status(500).send({ error: e.message });
     }
 });
 
-router.patch("/recipe/:id", async (req, res) => {
+router.patch('/recipe/:id', auth, async (req, res) => {
     const updates = Object.keys(req.body);
-    const allowedUpdates = ["title", "image", "description", "ingredients", "steps", "price", "author"];
+    const allowedUpdates = ['title', 'images', 'description', 'ingredients', 'steps', 'price', 'author'];
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
 
     if (!isValidOperation) {
-        return res.status(400).send({ error: "Invalid updates." });
+        return res.status(400).send({ error: 'Invalid updates.' });
     }
 
     try {
         const recipe = await Recipe.findById(req.params.id);
 
         if (!recipe) {
-            return res.status(404).send();
+            return res.status(404).send({ error: 'Recipe not found.' });
+        }
+
+        if (!recipe.author.equals(req.user._id)) {
+            return res.status(401).send({ error: 'You are not authorized to update this recipe.' });
         }
 
         updates.forEach((update) => (recipe[update] = req.body[update]));
@@ -53,21 +57,21 @@ router.patch("/recipe/:id", async (req, res) => {
 
         res.send(recipe);
     } catch (e) {
-        res.status(400).send(e);
+        res.status(400).send({ error: e.message });
     }
 });
 
-router.delete("/recipe/:id", async (req, res) => {
+router.delete('/recipe/:id', auth, async (req, res) => {
     try {
         const recipe = await Recipe.findByIdAndDelete(req.params.id);
 
         if (!recipe) {
-            res.status(404).send();
+            return res.status(404).send({ error: 'Recipe not found.' });
         }
 
         res.send(recipe);
     } catch (e) {
-        res.status(500).send();
+        res.status(500).send({ error: e.message });
     }
 });
 
