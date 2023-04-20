@@ -4,7 +4,7 @@ const Recipe = require("../models/recipe");
 const auth = require("../middleware/auth");
 const router = new express.Router();
 
-router.post("/purchase/buy", auth, async (req, res) => {
+router.post("/purchases/buy", auth, async (req, res) => {
     const recipe = await Recipe.findOne({ _id: req.body.recipe });
 
     const purchase = new Purchase({
@@ -21,7 +21,7 @@ router.post("/purchase/buy", auth, async (req, res) => {
     }
 });
 
-router.get("/purchase/me", auth, async (req, res) => {
+router.get("/purchases/me", auth, async (req, res) => {
     try {
         const purchases = await Purchase.find({ user: req.user._id }).populate("recipe");
 
@@ -38,7 +38,7 @@ router.get("/purchase/me", auth, async (req, res) => {
     }
 });
 
-router.get("/purchase/avaliable", auth, async (req, res) => {
+router.get("/purchases/avaliable", auth, async (req, res) => {
     try {
         const purchases = await Purchase.find({ user: req.user._id });
         let idList = [];

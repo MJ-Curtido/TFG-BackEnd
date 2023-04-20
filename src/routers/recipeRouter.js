@@ -3,7 +3,7 @@ const Recipe = require('../models/recipe');
 const auth = require('../middleware/auth');
 const router = new express.Router();
 
-router.post('/recipe/create', auth, async (req, res) => {
+router.post('/recipes/create', auth, async (req, res) => {
     let recipe = new Recipe({
         ...req.body,
         author: req.user._id,
@@ -18,7 +18,7 @@ router.post('/recipe/create', auth, async (req, res) => {
     }
 });
 
-router.get('/recipe/me', auth, async (req, res) => {
+router.get('/recipes/me', auth, async (req, res) => {
     try {
         const recipes = await Recipe.find({ author: req.user._id }).populate('author');
 
@@ -32,7 +32,7 @@ router.get('/recipe/me', auth, async (req, res) => {
     }
 });
 
-router.patch('/recipe/:id', auth, async (req, res) => {
+router.patch('/recipes/:id', auth, async (req, res) => {
     const updates = Object.keys(req.body);
     const allowedUpdates = ['title', 'images', 'description', 'ingredients', 'steps', 'price', 'author'];
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
@@ -61,7 +61,7 @@ router.patch('/recipe/:id', auth, async (req, res) => {
     }
 });
 
-router.delete('/recipe/:id', auth, async (req, res) => {
+router.delete('/recipes/:id', auth, async (req, res) => {
     try {
         const recipe = await Recipe.findByIdAndDelete(req.params.id);
 
