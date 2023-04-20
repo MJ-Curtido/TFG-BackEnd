@@ -23,7 +23,7 @@ router.get("/recipe/me", auth, async (req, res) => {
         const recipes = await Recipe.find({ author: req.user._id }).populate("author");
 
         if (recipes.length == 0) {
-            return res.status(404).send({ error: " You haven't created any recipe." });
+            return res.status(404).send({ error: "You haven't created any recipe." });
         }
 
         res.send(recipes);
@@ -34,11 +34,10 @@ router.get("/recipe/me", auth, async (req, res) => {
 
 router.patch("/recipe/:id", async (req, res) => {
     const updates = Object.keys(req.body);
-    const allowedUpdates = ["name", "description", "price", "initialDate", "finalDate"];
+    const allowedUpdates = ["title", "image", "description", "ingredients", "steps", "price", "author"];
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
 
     if (!isValidOperation) {
-        0;
         return res.status(400).send({ error: "Invalid updates." });
     }
 
