@@ -17,7 +17,7 @@ router.post("/purchase/buy", auth, async (req, res) => {
 
         res.status(201).send(purchase);
     } catch (e) {
-        res.status(400).send(e);
+        res.status(400).send({ error: e.message });
     }
 });
 
@@ -34,7 +34,7 @@ router.get("/purchase/me", auth, async (req, res) => {
 
         res.send(recipeList);
     } catch (e) {
-        res.status(500).send();
+        res.status(500).send({ error: e.message });
     }
 });
 
@@ -58,7 +58,7 @@ router.get("/purchase/avaliable", auth, async (req, res) => {
 
         res.send(recipesList);
     } catch (e) {
-        res.status(500).send();
+        res.status(500).send({ error: e.message});
     }
 });
 
