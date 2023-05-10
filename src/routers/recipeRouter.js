@@ -3,6 +3,7 @@ const Recipe = require('../models/recipe');
 const auth = require('../middleware/auth');
 const router = new express.Router();
 
+//crear receta
 router.post('/recipes/create', auth, async (req, res) => {
     let recipe = new Recipe({
         ...req.body,
@@ -18,6 +19,7 @@ router.post('/recipes/create', auth, async (req, res) => {
     }
 });
 
+//obtener mis recetas
 router.get('/recipes/me', auth, async (req, res) => {
     try {
         const recipes = await Recipe.find({ author: req.user._id }).populate('author');
@@ -32,6 +34,36 @@ router.get('/recipes/me', auth, async (req, res) => {
     }
 });
 
+//obtener recetas disponibles
+router.get('/recipes/avaliable', auth, async (req, res) => {
+    try {
+        const recipes = await Recipe.find({ author: { $ne: req.user._id } }).populate('author');
+
+        res.send(recipes);
+    } catch (e) {
+        res.status(500).send({ error: e.message });
+    }
+});
+
+//obtener recetas por ingrediente
+router.get('/recipes/ingredients/:ingredient', auth, async (req, res) => {
+    try {
+        const { ingredient } = req.params;  
+        const recipes = await Recipe.find({ author: { $ne: req.user._id } });
+
+        const filteredRecipes = recipes.filter((recipe) => recipe.ingredients.some((ing) => ing.name.toLowerCase().includes(ingredient.toLowerCase())));
+
+        if (filteredRecipes.length === 0) {
+            return res.status(404).send({ error: `No recipes found containing ingredient "${ingredient}"` });
+        }
+
+        res.send(filteredRecipes);
+    } catch (e) {
+        res.status(500).send({ error: e.message });
+    }
+});
+
+//modificar receta
 router.patch('/recipes/:id', auth, async (req, res) => {
     const updates = Object.keys(req.body);
     const allowedUpdates = ['title', 'images', 'description', 'ingredients', 'steps', 'price', 'author'];
@@ -61,6 +93,7 @@ router.patch('/recipes/:id', auth, async (req, res) => {
     }
 });
 
+//eliminar receta
 router.delete('/recipes/:id', auth, async (req, res) => {
     try {
         const recipe = await Recipe.findByIdAndDelete(req.params.id);

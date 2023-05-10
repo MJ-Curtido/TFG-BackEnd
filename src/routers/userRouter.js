@@ -3,6 +3,7 @@ const User = require("../models/user");
 const router = new express.Router();
 const auth = require("../middleware/auth");
 
+//registrar usuario
 router.post("/users/signin", async (req, res) => {
     const user = new User(req.body);
 
@@ -15,6 +16,7 @@ router.post("/users/signin", async (req, res) => {
     }
 });
 
+//iniciar sesión
 router.post("/users/login", async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password);
@@ -26,6 +28,7 @@ router.post("/users/login", async (req, res) => {
     }
 });
 
+//cerrar sesión
 router.get("/users/logout", auth, async (req, res) => {
     try {
         console.log(req.token);
@@ -40,10 +43,12 @@ router.get("/users/logout", auth, async (req, res) => {
     }
 });
 
+//obtener usuario
 router.get("/users/me", auth, async (req, res) => {
     res.send(req.user);
 });
 
+//actualizar usuario
 router.patch("/users/me", auth, async (req, res) => {
     const updates = Object.keys(req.body);
     const allowedUpdates = ["name", "email", "password", "birthdate", "telephone"];
@@ -63,6 +68,7 @@ router.patch("/users/me", auth, async (req, res) => {
     }
 });
 
+//eliminar usuario
 router.delete("/users/me", auth, async (req, res) => {
     try {
         await User.findByIdAndDelete(req.user._id);
