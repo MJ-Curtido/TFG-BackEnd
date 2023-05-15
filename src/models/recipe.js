@@ -62,6 +62,40 @@ const recipeSchema = mongoose.Schema(
             required: true,
             ref: 'User',
         },
+        valuation: {
+            type: Number,
+            default: 0,
+            trim: true,
+            validator(value) {
+                if (value < 0 || value > 5) {
+                    throw new Error('Invalid valuation');
+                }
+            }
+        },
+        reviews: [
+            {
+                user: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    required: true,
+                    ref: 'User',
+                },
+                text: {
+                    type: String,
+                    required: true,
+                    trim: true,
+                },
+                valuation: {
+                    type: Number,
+                    required: true,
+                    trim: true,
+                    validator(value) {
+                        if (value < 0 || value > 5) {
+                            throw new Error('Invalid valuation');
+                        }
+                    }
+                }
+            }
+        ]
     },
     { timestamps: true }
 );

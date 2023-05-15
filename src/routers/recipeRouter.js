@@ -2,6 +2,11 @@ const express = require('express');
 const Recipe = require('../models/recipe');
 const auth = require('../middleware/auth');
 const router = new express.Router();
+const pageSize = 10;
+
+function sortByValuation(recipes) {
+    return recipes.sort((a, b) => b.valuation - a.valuation);
+}
 
 //crear receta
 router.post('/recipes/create', auth, async (req, res) => {
@@ -22,13 +27,16 @@ router.post('/recipes/create', auth, async (req, res) => {
 //obtener mis recetas
 router.get('/recipes/me', auth, async (req, res) => {
     try {
-        const recipes = await Recipe.find({ author: req.user._id }).populate('author');
+        const page = parseInt(req.query.page);
+        const skip = (page - 1) * pageSize;
+
+        const recipes = await Recipe.find({ author: req.user._id }).populate('author').skip(skip).limit(pageSize);
 
         if (recipes.length == 0) {
             return res.status(404).send({ error: "You haven't created any recipe." });
         }
 
-        res.send(recipes);
+        res.send(sortByValuation(recipes));
     } catch (e) {
         res.status(500).send({ error: e.message });
     }
@@ -37,27 +45,52 @@ router.get('/recipes/me', auth, async (req, res) => {
 //obtener recetas disponibles
 router.get('/recipes/avaliable', auth, async (req, res) => {
     try {
-        const recipes = await Recipe.find({ author: { $ne: req.user._id } }).populate('author');
+        const page = parseInt(req.query.page);
+        const skip = (page - 1) * pageSize;
 
-        res.send(recipes);
+        const recipes = await Recipe.find({ author: { $ne: req.user._id } })
+            .populate('author')
+            .skip(skip)
+            .limit(pageSize);
+
+        if (recipes.length == 0) {
+            return res.status(404).send({ error: 'There are no available recipes.' });
+        }
+
+        res.send(sortByValuation(recipes));
     } catch (e) {
         res.status(500).send({ error: e.message });
     }
 });
 
-//obtener recetas por ingrediente
-router.get('/recipes/ingredients/:ingredient', auth, async (req, res) => {
+//obtener recetas por titulo e ingrediente
+router.get('/recipes/search/:search', auth, async (req, res) => {
     try {
-        const { ingredient } = req.params;  
-        const recipes = await Recipe.find({ author: { $ne: req.user._id } });
+        const { search } = req.params;
+        let page;
 
-        const filteredRecipes = recipes.filter((recipe) => recipe.ingredients.some((ing) => ing.name.toLowerCase().includes(ingredient.toLowerCase())));
+        if(req.query.page) {page = parseInt(req.query.page);}
+        else {return res.status('NaN').send({ error: `No more recipes found containing ${search}` });}
+
+        const skip = (page - 1) * pageSize;
+
+        const recipes = await Recipe.find({ author: { $ne: req.user._id } }).populate('author');
+        let filteredRecipes = sortByValuation(recipes.filter((recipe) => recipe.title.toLowerCase().includes(search.toLowerCase())));
+        const remainingRecipes = recipes.filter((recipe) => !filteredRecipes.includes(recipe));
+        const filteredRecipesByIng = remainingRecipes.filter((recipe) => recipe.ingredients.some((ing) => ing.name.toLowerCase().includes(search.toLowerCase())));
+        filteredRecipes = filteredRecipes.concat(sortByValuation(filteredRecipesByIng));
 
         if (filteredRecipes.length === 0) {
-            return res.status(404).send({ error: `No recipes found containing ingredient "${ingredient}"` });
+            return res.status(404).send({ error: `No recipes found containing ${search}` });
         }
 
-        res.send(filteredRecipes);
+        const paginatedRecipes = filteredRecipes.slice(skip, skip + pageSize);
+
+        if (paginatedRecipes.length === 0) {
+            return res.status(404).send({ error: `No more recipes found containing ${search}` });
+        }
+
+        res.send(paginatedRecipes);
     } catch (e) {
         res.status(500).send({ error: e.message });
     }
@@ -66,7 +99,7 @@ router.get('/recipes/ingredients/:ingredient', auth, async (req, res) => {
 //modificar receta
 router.patch('/recipes/:id', auth, async (req, res) => {
     const updates = Object.keys(req.body);
-    const allowedUpdates = ['title', 'images', 'description', 'ingredients', 'steps', 'price', 'author'];
+    const allowedUpdates = ['title', 'images', 'description', 'ingredients', 'steps', 'price', 'author', 'valuation', 'reviews'];
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
 
     if (!isValidOperation) {
