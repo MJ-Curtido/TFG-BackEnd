@@ -35,8 +35,6 @@ router.get('/purchases/me', auth, async (req, res) => {
     try {
         const purchases = await Purchase.find({ user: req.user._id });
 
-        console.log(purchases);
-
         let recipeList = [];
         for (let i = 0; i < purchases.length; i++) {
             const recipe = await Recipe.findById({ _id: purchases[i].recipe }).populate('author');

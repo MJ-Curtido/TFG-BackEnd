@@ -31,7 +31,6 @@ router.post("/users/login", async (req, res) => {
 //cerrar sesión
 router.get("/users/logout", auth, async (req, res) => {
     try {
-        console.log(req.token);
         req.user.tokens = req.user.tokens.filter((token) => {
             return token.token !== req.token;
         });
