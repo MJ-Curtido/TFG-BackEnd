@@ -43,7 +43,7 @@ router.get('/recipes/me', auth, async (req, res) => {
 });
 
 //obtener recetas disponibles
-router.get('/recipes/avaliable', auth, async (req, res) => {
+router.get('/recipes/available', auth, async (req, res) => {
     try {
         const page = parseInt(req.query.page);
         const skip = (page - 1) * pageSize;
