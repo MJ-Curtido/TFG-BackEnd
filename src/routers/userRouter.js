@@ -46,11 +46,6 @@ router.get('/users/logout', auth, async (req, res) => {
     }
 });
 
-//obtener usuario
-router.get('/users/me', auth, async (req, res) => {
-    res.send(req.user);
-});
-
 //actualizar usuario
 router.patch('/users/me', auth, async (req, res) => {
     const updates = Object.keys(req.body);
