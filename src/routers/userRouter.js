@@ -16,7 +16,7 @@ router.post('/users/signin', async (req, res) => {
         const token = await user.generateAuthToken();
         res.status(201).send({ user: user, token });
     } catch (e) {
-        res.status(400).send({ error: e.message });
+        res.status(500).send({ error: e.message });
     }
 });
 
@@ -44,6 +44,11 @@ router.get('/users/logout', auth, async (req, res) => {
     } catch (e) {
         res.status(500).send({ error: e.message });
     }
+});
+
+//obtener usuario
+router.get('/users/me', auth, async (req, res) => {
+    res.send(req.user);
 });
 
 //actualizar usuario

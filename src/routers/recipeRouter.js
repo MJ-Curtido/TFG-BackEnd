@@ -96,6 +96,25 @@ router.get('/recipes/search/:search', auth, async (req, res) => {
     }
 });
 
+//obtener receta por id de usuario
+router.get('/recipes/user/:id', auth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const page = parseInt(req.query.page);
+        const skip = (page - 1) * pageSize;
+
+        const recipes = await Recipe.find({ author: id }).populate('author').skip(skip).limit(pageSize);
+
+        if (recipes.length == 0) {
+            return res.status(404).send({ error: 'User has not created any recipe.' });
+        }
+
+        res.send(sortByValuation(recipes));
+    } catch (e) {
+        res.status(500).send({ error: e.message });
+    }
+});
+
 //modificar receta
 router.patch('/recipes/:id', auth, async (req, res) => {
     const updates = Object.keys(req.body);
