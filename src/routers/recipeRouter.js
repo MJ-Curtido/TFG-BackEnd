@@ -30,13 +30,18 @@ router.get('/recipes/me', auth, async (req, res) => {
         const page = parseInt(req.query.page);
         const skip = (page - 1) * pageSize;
 
+        const totalRecipes = await Recipe.countDocuments({ author: req.user._id });
+
         const recipes = await Recipe.find({ author: req.user._id }).populate('author').skip(skip).limit(pageSize);
 
-        if (recipes.length == 0) {
+        if (recipes.length === 0) {
             return res.status(404).send({ error: "You haven't created any recipe." });
         }
 
-        res.send(sortByValuation(recipes));
+        res.send({
+            recipes: sortByValuation(recipes),
+            totalRecipes,
+        });
     } catch (e) {
         res.status(500).send({ error: e.message });
     }
@@ -48,16 +53,21 @@ router.get('/recipes/available', auth, async (req, res) => {
         const page = parseInt(req.query.page);
         const skip = (page - 1) * pageSize;
 
+        const totalRecipes = await Recipe.countDocuments({ author: { $ne: req.user._id } });
+
+        if (totalRecipes === 0) {
+            return res.status(404).send({ error: 'There are no available recipes.' });
+        }
+
         const recipes = await Recipe.find({ author: { $ne: req.user._id } })
             .populate('author')
             .skip(skip)
             .limit(pageSize);
 
-        if (recipes.length == 0) {
-            return res.status(404).send({ error: 'There are no available recipes.' });
-        }
-
-        res.send(sortByValuation(recipes));
+        res.send({
+            recipes: sortByValuation(recipes),
+            totalRecipes,
+        });
     } catch (e) {
         res.status(500).send({ error: e.message });
     }
@@ -69,8 +79,11 @@ router.get('/recipes/search/:search', auth, async (req, res) => {
         const { search } = req.params;
         let page;
 
-        if(req.query.page) {page = parseInt(req.query.page);}
-        else {return res.status('NaN').send({ error: `No more recipes found containing ${search}` });}
+        if (req.query.page) {
+            page = parseInt(req.query.page);
+        } else {
+            return res.status('NaN').send({ error: `No more recipes found containing ${search}` });
+        }
 
         const skip = (page - 1) * pageSize;
 
@@ -90,26 +103,34 @@ router.get('/recipes/search/:search', auth, async (req, res) => {
             return res.status(404).send({ error: `No more recipes found containing ${search}` });
         }
 
-        res.send(paginatedRecipes);
+        res.send({
+            recipes: paginatedRecipes,
+            totalRecipes: filteredRecipes.length,
+        });
     } catch (e) {
         res.status(500).send({ error: e.message });
     }
 });
 
-//obtener receta por id de usuario
+//obtener recetas por id de usuario
 router.get('/recipes/user/:id', auth, async (req, res) => {
     try {
         const { id } = req.params;
         const page = parseInt(req.query.page);
         const skip = (page - 1) * pageSize;
 
+        const totalRecipes = await Recipe.countDocuments({ author: id });
+
         const recipes = await Recipe.find({ author: id }).populate('author').skip(skip).limit(pageSize);
 
-        if (recipes.length == 0) {
+        if (recipes.length === 0) {
             return res.status(404).send({ error: 'User has not created any recipe.' });
         }
 
-        res.send(sortByValuation(recipes));
+        res.send({
+            recipes: sortByValuation(recipes),
+            totalRecipes,
+        });
     } catch (e) {
         res.status(500).send({ error: e.message });
     }
