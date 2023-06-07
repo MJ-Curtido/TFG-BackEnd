@@ -32,14 +32,14 @@ router.get('/recipes/me', auth, async (req, res) => {
 
         const totalRecipes = await Recipe.countDocuments({ author: req.user._id });
 
-        const recipes = await Recipe.find({ author: req.user._id }).populate('author').skip(skip).limit(pageSize);
-
-        if (recipes.length === 0) {
+        if (totalRecipes === 0) {
             return res.status(404).send({ error: "You haven't created any recipe." });
         }
 
+        const recipes = await Recipe.find({ author: req.user._id }).populate('author');
+
         res.send({
-            recipes: sortByValuation(recipes),
+            recipes: sortByValuation(recipes).slice(skip, skip + pageSize),
             totalRecipes,
         });
     } catch (e) {
@@ -59,13 +59,10 @@ router.get('/recipes/available', auth, async (req, res) => {
             return res.status(404).send({ error: 'There are no available recipes.' });
         }
 
-        const recipes = await Recipe.find({ author: { $ne: req.user._id } })
-            .populate('author')
-            .skip(skip)
-            .limit(pageSize);
+        const recipes = await Recipe.find({ author: { $ne: req.user._id } }).populate('author');
 
         res.send({
-            recipes: sortByValuation(recipes),
+            recipes: sortByValuation(recipes).slice(skip, skip + pageSize),
             totalRecipes,
         });
     } catch (e) {
@@ -121,16 +118,31 @@ router.get('/recipes/user/:id', auth, async (req, res) => {
 
         const totalRecipes = await Recipe.countDocuments({ author: id });
 
-        const recipes = await Recipe.find({ author: id }).populate('author').skip(skip).limit(pageSize);
-
-        if (recipes.length === 0) {
+        if (totalRecipes === 0) {
             return res.status(404).send({ error: 'User has not created any recipe.' });
         }
 
+        const recipes = await Recipe.find({ author: id }).populate('author');
+
         res.send({
-            recipes: sortByValuation(recipes),
+            recipes: sortByValuation(recipes).slice(skip, skip + pageSize),
             totalRecipes,
         });
+    } catch (e) {
+        res.status(500).send({ error: e.message });
+    }
+});
+
+//obtener receta por id
+router.get('/recipes/:id', auth, async (req, res) => {
+    try {
+        const recipe = await Recipe.findById(req.params.id).populate('author');
+
+        if (!recipe) {
+            return res.status(404).send({ error: 'Recipe not found.' });
+        }
+
+        res.send(recipe);
     } catch (e) {
         res.status(500).send({ error: e.message });
     }

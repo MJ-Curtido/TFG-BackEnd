@@ -37,14 +37,7 @@ const recipeSchema = mongoose.Schema(
         ],
         steps: [
             {
-                description: {
-                    type: String,
-                    required: true,
-                    trim: true,
-                },
-                image: {
-                    type: Buffer,
-                },
+                type: String,
             },
         ],
         price: {
@@ -70,7 +63,7 @@ const recipeSchema = mongoose.Schema(
                 if (value < 0 || value > 5) {
                     throw new Error('Invalid valuation');
                 }
-            }
+            },
         },
         reviews: [
             {
@@ -92,24 +85,24 @@ const recipeSchema = mongoose.Schema(
                         if (value < 0 || value > 5) {
                             throw new Error('Invalid valuation');
                         }
-                    }
-                }
-            }
-        ]
+                    },
+                },
+            },
+        ],
     },
     { timestamps: true }
 );
 
-recipeSchema.methods.toJSON = function () {
-    const recipe = this;
-    const objectRecipe = recipe.toObject();
-    const author = objectRecipe.author;
+// recipeSchema.methods.toJSON = function () {
+//     const recipe = this;
+//     const objectRecipe = recipe.toObject();
+//     const author = objectRecipe.author;
 
-    delete objectRecipe.author;
-    objectRecipe.author = author.name;
+//     delete objectRecipe.author;
+//     objectRecipe.author = author.name;
 
-    return objectRecipe;
-};
+//     return objectRecipe;
+// };
 
 recipeSchema.pre('remove', async function (next) {
     const recipe = this;
