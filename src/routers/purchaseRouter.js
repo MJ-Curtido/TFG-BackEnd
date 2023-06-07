@@ -39,15 +39,11 @@ router.get('/purchases', auth, async (req, res) => {
 
         const totalPurchases = await Purchase.countDocuments({ user: req.user._id });
 
-        console.log(totalPurchases);
-
         if (totalPurchases === 0) {
             return res.status(404).send({ error: "You haven't bought any recipe." });
         }
 
         const purchases = await Purchase.find({ user: req.user._id });
-
-        console.log(purchases);
 
         let recipeList = [];
         for (let i = 0; i < purchases.length; i++) {
@@ -55,8 +51,6 @@ router.get('/purchases', auth, async (req, res) => {
 
             recipeList.push(recipe);
         }
-
-        console.log(recipeList);
 
         res.send({
             recipes: sortByValuation(recipeList).slice(skip, skip + pageSize),
