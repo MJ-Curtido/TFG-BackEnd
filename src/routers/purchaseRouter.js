@@ -107,4 +107,25 @@ router.get('/purchases/search/:search', auth, async (req, res) => {
     }
 });
 
+//obtener si una receta esta comprada
+router.get('/purchases/:id', auth, async (req, res) => {
+    try {
+        const recipe = await Recipe.findOne({ _id: req.params.id, author: { $ne: req.user._id } });
+
+        if (!recipe) {
+            return res.status(404).send({ error: 'Recipe not found.' });
+        }
+
+        const purchase = await Purchase.findOne({ recipe: req.params.id, user: req.user._id });
+
+        if (!purchase) {
+            return res.send({ bought: false });
+        }
+
+        res.send({ bought: true });
+    } catch (e) {
+        res.status(500).send({ error: e.message });
+    }
+});
+
 module.exports = router;
