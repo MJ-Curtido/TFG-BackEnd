@@ -4,8 +4,6 @@ const auth = require('../middleware/auth');
 const router = new express.Router();
 const pageSize = 10;
 
-//TODO: Hacer el método para poner una reseña a una receta con patch, ya sea con el que ya está creado o con uno nuevo
-
 function sortByValuation(recipes) {
     return recipes.sort((a, b) => b.valuation - a.valuation);
 }
@@ -61,7 +59,9 @@ router.get('/recipes/available', auth, async (req, res) => {
             return res.status(404).send({ error: 'There are no available recipes.' });
         }
 
-        const recipes = await Recipe.find({ author: { $ne: req.user._id } }).populate('author').populate('reviews.user');
+        const recipes = await Recipe.find({ author: { $ne: req.user._id } })
+            .populate('author')
+            .populate('reviews.user');
 
         res.send({
             recipes: sortByValuation(recipes).slice(skip, skip + pageSize),
@@ -86,7 +86,9 @@ router.get('/recipes/search/:search', auth, async (req, res) => {
 
         const skip = (page - 1) * pageSize;
 
-        const recipes = await Recipe.find({ author: { $ne: req.user._id } }).populate('author').populate('reviews.user');
+        const recipes = await Recipe.find({ author: { $ne: req.user._id } })
+            .populate('author')
+            .populate('reviews.user');
         let filteredRecipes = sortByValuation(recipes.filter((recipe) => recipe.title.toLowerCase().includes(search.toLowerCase())));
         const remainingRecipes = recipes.filter((recipe) => !filteredRecipes.includes(recipe));
         const filteredRecipesByIng = remainingRecipes.filter((recipe) => recipe.ingredients.some((ing) => ing.name.toLowerCase().includes(search.toLowerCase())));
@@ -168,10 +170,10 @@ router.get('/recipes/me/:id', auth, async (req, res) => {
 //modificar receta
 router.patch('/recipes/:id', auth, async (req, res) => {
     const updates = Object.keys(req.body);
-    const allowedUpdates = ['title', 'images', 'description', 'ingredients', 'steps', 'price', 'reviews'];
+    const allowedUpdates = ['title', 'images', 'description', 'ingredients', 'steps', 'price'];
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
 
-    if (!isValidOperation) {
+    if (!isValidOperation && !updates.includes('reviews')) {
         return res.status(400).send({ error: 'Invalid updates.' });
     }
 
@@ -182,23 +184,32 @@ router.patch('/recipes/:id', auth, async (req, res) => {
             return res.status(404).send({ error: 'Recipe not found.' });
         }
 
-        if (!recipe.author.equals(req.user._id)) {
-            return res.status(401).send({ error: 'You are not authorized to update this recipe.' });
-        }
+        if (updates.includes('reviews')) {
+            console.log('reviews');
+            updates.forEach((update) => {
+                if (update === 'reviews') {
+                    recipe.reviews.unshift(req.body.reviews);
 
-        updates.forEach((update) => {
-            if (update === 'reviews') {
-                recipe.reviews.push(req.body.reviews);
+                    const totalValuation = recipe.reviews.reduce((acc, review) => acc + review.valuation, 0);
+                    recipe.valuation = totalValuation / recipe.reviews.length;
+                }
+            });
+            await recipe.save();
 
-                const totalValuation = recipe.reviews.reduce((acc, review) => acc + review.valuation, 0);
-                recipe.valuation = totalValuation / recipe.reviews.length;
-            } else {
-                recipe[update] = req.body[update];
+            res.send(recipe);
+        } else {
+            console.log('reviews');
+            if (!recipe.author.equals(req.user._id)) {
+                return res.status(401).send({ error: 'You are not authorized to update this recipe.' });
             }
-        });
-        await recipe.save();
 
-        res.send(recipe);
+            updates.forEach((update) => {
+                recipe[update] = req.body[update];
+            });
+            await recipe.save();
+
+            res.send(recipe);
+        }
     } catch (e) {
         res.status(400).send({ error: e.message });
     }
