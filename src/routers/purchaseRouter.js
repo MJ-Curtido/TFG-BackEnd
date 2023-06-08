@@ -37,9 +37,9 @@ router.get('/purchases', auth, async (req, res) => {
         const page = parseInt(req.query.page);
         const skip = (page - 1) * pageSize;
 
-        const totalPurchases = await Purchase.countDocuments({ user: req.user._id });
+        const totalRecipes = await Purchase.countDocuments({ user: req.user._id });
 
-        if (totalPurchases === 0) {
+        if (totalRecipes === 0) {
             return res.status(404).send({ error: "You haven't bought any recipe." });
         }
 
@@ -54,7 +54,7 @@ router.get('/purchases', auth, async (req, res) => {
 
         res.send({
             recipes: sortByValuation(recipeList).slice(skip, skip + pageSize),
-            totalPurchases,
+            totalRecipes,
         });
     } catch (e) {
         res.status(500).send({ error: e.message });
