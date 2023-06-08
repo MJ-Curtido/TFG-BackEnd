@@ -8,6 +8,10 @@ function sortByValuation(recipes) {
     return recipes.sort((a, b) => b.valuation - a.valuation);
 }
 
+function sortByDate(recipes) {
+    return recipes.sort((a, b) => b.createdAt - a.createdAt);
+}
+
 //crear receta
 router.post('/recipes/create', auth, async (req, res) => {
     let recipe = new Recipe({
@@ -113,8 +117,8 @@ router.get('/recipes/search/:search', auth, async (req, res) => {
     }
 });
 
-//obtener recetas por id de usuario
-router.get('/recipes/user/:id', auth, async (req, res) => {
+//obtener recetas por id de usuario ordenadas por valoración
+router.get('/recipes/user/valuation/:id', auth, async (req, res) => {
     try {
         const { id } = req.params;
         const page = parseInt(req.query.page);
@@ -130,6 +134,30 @@ router.get('/recipes/user/:id', auth, async (req, res) => {
 
         res.send({
             recipes: sortByValuation(recipes).slice(skip, skip + pageSize),
+            totalRecipes,
+        });
+    } catch (e) {
+        res.status(500).send({ error: e.message });
+    }
+});
+
+//obtener recetas por id de usuario ordenadas por fecha de creación
+router.get('/recipes/user/date/:id', auth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const page = parseInt(req.query.page);
+        const skip = (page - 1) * pageSize;
+
+        const totalRecipes = await Recipe.countDocuments({ author: id });
+
+        if (totalRecipes === 0) {
+            return res.status(404).send({ error: 'User has not created any recipe.' });
+        }
+
+        const recipes = await Recipe.find({ author: id }).populate('author').populate('reviews.user');
+
+        res.send({
+            recipes: sortByDate(recipes).slice(skip, skip + pageSize),
             totalRecipes,
         });
     } catch (e) {
