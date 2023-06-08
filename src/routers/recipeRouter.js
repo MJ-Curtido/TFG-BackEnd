@@ -185,7 +185,6 @@ router.patch('/recipes/:id', auth, async (req, res) => {
         }
 
         if (updates.includes('reviews')) {
-            console.log('reviews');
             updates.forEach((update) => {
                 if (update === 'reviews') {
                     recipe.reviews.unshift(req.body.reviews);
@@ -198,7 +197,6 @@ router.patch('/recipes/:id', auth, async (req, res) => {
 
             res.send(recipe);
         } else {
-            console.log('reviews');
             if (!recipe.author.equals(req.user._id)) {
                 return res.status(401).send({ error: 'You are not authorized to update this recipe.' });
             }
