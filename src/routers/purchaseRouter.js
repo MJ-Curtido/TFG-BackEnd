@@ -110,7 +110,7 @@ router.get('/purchases/search/:search', auth, async (req, res) => {
 //obtener si una receta esta comprada
 router.get('/purchases/:id', auth, async (req, res) => {
     try {
-        const recipe = await Recipe.findOne({ _id: req.params.id, author: { $ne: req.user._id } });
+        const recipe = await Recipe.findOne({ _id: req.params.id });
 
         if (!recipe) {
             return res.status(404).send({ error: 'Recipe not found.' });
