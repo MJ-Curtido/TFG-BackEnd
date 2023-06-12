@@ -1,6 +1,7 @@
 const express = require('express');
 const Recipe = require('../models/recipe');
 const auth = require('../middleware/auth');
+const upload = require('../middleware/upload');
 const router = new express.Router();
 const pageSize = 10;
 
@@ -13,20 +14,38 @@ function sortByDate(recipes) {
 }
 
 //crear receta
-router.post('/recipes/create', auth, async (req, res) => {
-    let recipe = new Recipe({
+// router.post('/recipes/create', upload, auth, async (req, res) => {
+//     console.log(req.body.recipe.name);
+//     let recipe = new Recipe({
+//         ...req.body,
+//         author: req.user._id,
+//     });
+
+//     try {
+//         await recipe.save();
+//         recipe = await Recipe.findById(recipe._id).populate('author').populate('reviews.user');
+//         res.status(201).send(recipe);
+//     } catch (e) {
+//         res.status(400).send({ error: e.message });
+//     }
+// });
+
+router.post('/recipes/create', upload.array('images'), auth, async (req, res) => {  
+    try {
+      let recipe = new Recipe({
         ...req.body,
         author: req.user._id,
-    });
-
-    try {
-        await recipe.save();
-        recipe = await Recipe.findById(recipe._id).populate('author').populate('reviews.user');
-        res.status(201).send(recipe);
+        images: req.files.map((file) => file.path),
+      });
+  
+      await recipe.save();
+  
+      recipe = await Recipe.findById(recipe._id).populate('author').populate('reviews.user');
+      res.status(201).send(recipe);
     } catch (e) {
-        res.status(400).send({ error: e.message });
+      res.status(400).send({ error: e.message });
     }
-});
+  });
 
 //obtener mis recetas
 router.get('/recipes/me', auth, async (req, res) => {
@@ -196,50 +215,50 @@ router.get('/recipes/me/:id', auth, async (req, res) => {
 });
 
 //modificar receta
-router.patch('/recipes/:id', auth, async (req, res) => {
-    const updates = Object.keys(req.body);
-    const allowedUpdates = ['title', 'images', 'description', 'ingredients', 'steps', 'price'];
-    const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
+// router.patch('/recipes/:id', upload, auth, async (req, res) => {
+//     const updates = Object.keys(req.body);
+//     const allowedUpdates = ['title', 'images', 'description', 'ingredients', 'steps', 'price'];
+//     const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
 
-    if (!isValidOperation && !updates.includes('reviews')) {
-        return res.status(400).send({ error: 'Invalid updates.' });
-    }
+//     if (!isValidOperation && !updates.includes('reviews')) {
+//         return res.status(400).send({ error: 'Invalid updates.' });
+//     }
 
-    try {
-        const recipe = await Recipe.findById(req.params.id);
+//     try {
+//         const recipe = await Recipe.findById(req.params.id);
 
-        if (!recipe) {
-            return res.status(404).send({ error: 'Recipe not found.' });
-        }
+//         if (!recipe) {
+//             return res.status(404).send({ error: 'Recipe not found.' });
+//         }
 
-        if (updates.includes('reviews')) {
-            updates.forEach((update) => {
-                if (update === 'reviews') {
-                    recipe.reviews.unshift(req.body.reviews);
+//         if (updates.includes('reviews')) {
+//             updates.forEach((update) => {
+//                 if (update === 'reviews') {
+//                     recipe.reviews.unshift(req.body.reviews);
 
-                    const totalValuation = recipe.reviews.reduce((acc, review) => acc + review.valuation, 0);
-                    recipe.valuation = totalValuation / recipe.reviews.length;
-                }
-            });
-            await recipe.save();
+//                     const totalValuation = recipe.reviews.reduce((acc, review) => acc + review.valuation, 0);
+//                     recipe.valuation = totalValuation / recipe.reviews.length;
+//                 }
+//             });
+//             await recipe.save();
 
-            res.send(recipe);
-        } else {
-            if (!recipe.author.equals(req.user._id)) {
-                return res.status(401).send({ error: 'You are not authorized to update this recipe.' });
-            }
+//             res.send(recipe);
+//         } else {
+//             if (!recipe.author.equals(req.user._id)) {
+//                 return res.status(401).send({ error: 'You are not authorized to update this recipe.' });
+//             }
 
-            updates.forEach((update) => {
-                recipe[update] = req.body[update];
-            });
-            await recipe.save();
+//             updates.forEach((update) => {
+//                 recipe[update] = req.body[update];
+//             });
+//             await recipe.save();
 
-            res.send(recipe);
-        }
-    } catch (e) {
-        res.status(400).send({ error: e.message });
-    }
-});
+//             res.send(recipe);
+//         }
+//     } catch (e) {
+//         res.status(400).send({ error: e.message });
+//     }
+// });
 
 //eliminar receta
 router.delete('/recipes/:id', auth, async (req, res) => {

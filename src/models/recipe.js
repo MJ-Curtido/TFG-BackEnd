@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Purchase = require('./purchase');
+const upload = require('../middleware/upload');
 
 const recipeSchema = mongoose.Schema(
     {
@@ -93,16 +94,10 @@ const recipeSchema = mongoose.Schema(
     { timestamps: true }
 );
 
-// recipeSchema.methods.toJSON = function () {
-//     const recipe = this;
-//     const objectRecipe = recipe.toObject();
-//     const author = objectRecipe.author;
-
-//     delete objectRecipe.author;
-//     objectRecipe.author = author.name;
-
-//     return objectRecipe;
-// };
+recipeSchema.post('validate', function (req, res, next) {
+    req.body.images = req.files.map((file) => file.path);
+    next();
+});
 
 recipeSchema.pre('remove', async function (next) {
     const recipe = this;
