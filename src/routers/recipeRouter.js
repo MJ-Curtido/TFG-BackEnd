@@ -14,22 +14,22 @@ function sortByDate(recipes) {
 }
 
 //crear receta
-router.post('/recipes/create', upload.array('images'), auth, async (req, res) => {  
+router.post('/recipes/create', upload.array('images'), auth, async (req, res) => {
     try {
-      let recipe = new Recipe({
-        ...req.body,
-        author: req.user._id,
-        images: req.files.map((file) => file.path),
-      });
-  
-      await recipe.save();
-  
-      recipe = await Recipe.findById(recipe._id).populate('author').populate('reviews.user');
-      res.status(201).send(recipe);
+        let recipe = new Recipe({
+            ...req.body,
+            author: req.user._id,
+            images: req.files.map((file) => `http://127.0.0.1/${file.path.replace(/\\/g, '/')}`),
+        });
+
+        await recipe.save();
+
+        recipe = await Recipe.findById(recipe._id).populate('author').populate('reviews.user');
+        res.status(201).send(recipe);
     } catch (e) {
-      res.status(400).send({ error: e.message });
+        res.status(400).send({ error: e.message });
     }
-  });
+});
 
 //obtener mis recetas
 router.get('/recipes/me', auth, async (req, res) => {
