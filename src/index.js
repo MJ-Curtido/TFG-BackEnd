@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const multer = require('multer');
 require("./db/mongoose");
 const userRouter = require("./routers/userRouter");
 const recipeRouter = require("./routers/recipeRouter");

@@ -14,22 +14,6 @@ function sortByDate(recipes) {
 }
 
 //crear receta
-// router.post('/recipes/create', upload, auth, async (req, res) => {
-//     console.log(req.body.recipe.name);
-//     let recipe = new Recipe({
-//         ...req.body,
-//         author: req.user._id,
-//     });
-
-//     try {
-//         await recipe.save();
-//         recipe = await Recipe.findById(recipe._id).populate('author').populate('reviews.user');
-//         res.status(201).send(recipe);
-//     } catch (e) {
-//         res.status(400).send({ error: e.message });
-//     }
-// });
-
 router.post('/recipes/create', upload.array('images'), auth, async (req, res) => {  
     try {
       let recipe = new Recipe({
