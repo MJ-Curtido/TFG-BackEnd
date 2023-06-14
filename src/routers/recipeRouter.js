@@ -13,13 +13,35 @@ function sortByDate(recipes) {
     return recipes.sort((a, b) => b.createdAt - a.createdAt);
 }
 
+//petición especial para obtener las fotos de las recetas
+router.get('/uploads/:imageName', async (req, res) => {
+    const _id = req.params.id;
+    const nickName = req.params.nickName;
+    const imageName = req.params.imageName;
+
+    try {
+        const imagePath = `./assets/${nickName}-${_id}/imgs/${imageName}`;
+
+        if (fs.existsSync(imagePath)) {
+            const file = fs.createReadStream(imagePath);
+            const mimeType = mime.lookup(imagePath);
+            res.setHeader('Content-Type', mimeType);
+            file.pipe(res);
+        } else {
+            res.status(404).send();
+        }
+    } catch (e) {
+        res.status(500).send();
+    }
+});
+
 //crear receta
 router.post('/recipes/create', upload.array('images'), auth, async (req, res) => {
     try {
         let recipe = new Recipe({
             ...req.body,
             author: req.user._id,
-            images: req.files.map((file) => `http://127.0.0.1/${file.path.replace(/\\/g, '/')}`),
+            images: req.files.map((file) => `${file.path.replace(/\\/g, '/')}`),
         });
 
         await recipe.save();
@@ -253,7 +275,11 @@ router.patch('/recipes/:id', upload.array('images'), auth, async (req, res) => {
         }
 
         updates.forEach((update) => {
-            recipe[update] = req.body[update];
+            if (update === 'images') {
+                recipe[update] = req.files.map((file) => `${file.path.replace(/\\/g, '/')}`);
+            } else {
+                recipe[update] = req.body[update];
+            }
         });
         await recipe.save();
 
