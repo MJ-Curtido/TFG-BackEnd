@@ -2,6 +2,8 @@ const express = require('express');
 const Recipe = require('../models/recipe');
 const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const fs = require('fs');
+const mime = require('mime-types');
 const router = new express.Router();
 const pageSize = 10;
 
@@ -15,12 +17,10 @@ function sortByDate(recipes) {
 
 //petición especial para obtener las fotos de las recetas
 router.get('/uploads/:imageName', async (req, res) => {
-    const _id = req.params.id;
-    const nickName = req.params.nickName;
     const imageName = req.params.imageName;
 
     try {
-        const imagePath = `./assets/${nickName}-${_id}/imgs/${imageName}`;
+        const imagePath = `./uploads/${imageName}`;
 
         if (fs.existsSync(imagePath)) {
             const file = fs.createReadStream(imagePath);
